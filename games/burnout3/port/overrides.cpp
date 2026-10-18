@@ -141,14 +141,6 @@ void SkipMovie(lifted::Context& c) {
     F_001313C0(c);
 }
 
-/* The main loop's (0x00132600) loading states, each a function it calls
-   once a frame until it returns non-zero (FINDINGS: "Loading a race"):
-   0x0019A950 in state 4, a race's world, a phase a frame; 0x001322B0 in
-   states 7 and 9, the game's own - the long load at boot, and after a race.
-   Most of their time goes to frames going by and the IOP's streams, neither
-   CPU busy. While one returns 0 the vertical blanks come faster
-   (SetFastForward): the loading screen, a still picture and a spinner, goes
-   by sooner. PS2HOST_LOAD_SPEED says how much faster (1: as the console). */
 /* The frame's post effects (0x002FA9A0, from the race's and the frontend's
    3D drawing): the frame copied to a half-size buffer, its bright parts
    (glow) and a radial speed blur gathered there over frames, the buffer laid
@@ -167,12 +159,35 @@ void WaitsForInterrupt(lifted::Context& c) {
     Wait(c);
 }
 
+/* The main loop's (0x00132600) loading states, each a function it calls
+   once a frame until it returns non-zero (FINDINGS: "Loading a race"):
+   0x0019A950 in state 4, a race's world, a phase a frame; 0x001322B0 in
+   states 7 and 9, the game's own - the long load at boot, and after a race.
+   A step only asks whether what it waits for is done (the IOP's reads and
+   streams), so taken once a frame the loading waits mostly on frames going
+   by. In real time the step is taken again within the frame, the IOP
+   running a slice between steps, for up to half a frame: the vertical
+   blanks - and the loading screen's spinner, the music - keep their pace.
+   A race's load 6.3 s -> 2.6 s, the boot's 5.9 s -> 2.4 s (what is left is
+   mostly the race's sound streams, which fill as the sound plays).
+   PS2HOST_LOAD_SPEED=1: a step a frame, as the console. */
 template <void (*Load)(lifted::Context&)>
 void FastLoading(lifted::Context& c) {
-    static const char* forced = std::getenv("PS2HOST_LOAD_SPEED");
-    const unsigned speed = forced ? unsigned(std::max(1, std::atoi(forced))) : 8u;
+    static const bool console = [] {
+        const char* speed = std::getenv("PS2HOST_LOAD_SPEED");
+        return speed && std::atoi(speed) <= 1;
+    }();
+    constexpr u64 kStepsNs = 8'000'000;         // half a frame
+    u64 args[32];
+    std::memcpy(args, c.r, sizeof args);
+    const u64 from = ps2host::ClockNs();
     Load(c);
-    ps2host::SetFastForward(u32(c.r[2]) ? 1 : speed);
+    if (console) return;
+    while (!u32(c.r[2]) && !ps2host::BlankDue() && ps2host::ClockNs() - from < kStepsNs &&
+           ps2host::RunIopBetweenSteps()) {
+        std::memcpy(c.r, args, sizeof args);
+        Load(c);
+    }
 }
 
 // ------------------------------------------------------------ PC SETTINGS
@@ -1105,6 +1120,12 @@ void RegisterGameOverrides() {
     // Frame pacing off (no PC SETTINGS row): the least delay; frame_pacing=on
     // in the settings file still turns it on.
     ps2host::SetFramePacingDefault(false);
+    // A frame's picture at its blank's end (SetPresentAtBlankEnd): the game
+    // waits for the blank, then copies its finished frame (0x46) to the
+    // displayed buffer (0) - in the blank, where the console shows it in the
+    // very next field. Taken at the blank's start, every picture went out a
+    // frame late.
+    ps2host::SetPresentAtBlankEnd(true);
     // ANTIALIASING has no SSAA 4X any more: a settings file's is 2X.
     if (ps2host::Setting("antialiasing", "off") == "ssaa4") ps2host::SetSetting("antialiasing", "ssaa2");
     // The GPU pipelines the game draws with, made in the background from the

@@ -1921,10 +1921,18 @@ than it needed to be, and one is the game's own pace:
   vertical blank (real time; an answer it sends wakes the EE): 8.7 s to
   6.4 s.
 * The phases go a step a frame. port/overrides.cpp's FastLoading wraps
-  0x0019A950: while it returns 0, vertical blanks come eight times as often
-  (SetFastForward; PS2HOST_LOAD_SPEED, 1 for the console's pace). The
-  loading screen is a still picture and a spinner. 6.4 s to 2.6 s (4x: 2.9,
-  16x: 2.5).
+  0x0019A950: while it returns 0, vertical blanks came eight times as often
+  (SetFastForward): 6.4 s to 2.6 s (4x: 2.9, 16x: 2.5) - but the loading
+  screen's spinner, and everything else timed by frames, went eight times as
+  fast with them. Since 2026-10-19 the step is taken again within the frame
+  instead (ps2host::RunIopBetweenSteps between steps: the IOP's slice, its
+  replies delivered), for up to half a frame or until the blank is due; the
+  blanks keep the console's pace. Real time, 1x blanks throughout: 6.34 s
+  (379 frames) -> 2.61 s (155 frames); phase 4 2.4 -> 1.37 s, 5 1.05 ->
+  0.68 s, 13 0.57 -> 0.40 s, 16 2.04 s -> 0.02 s. A quarter of a frame
+  gave 3.05 s, three quarters the same as half. PS2HOST_LOAD_SPEED=1: a
+  step a frame, as the console. The disc is not what is left (the drive 100
+  times as fast: the same).
 * What is left is mostly phase 4's audio streams, which fill as the sound
   plays (IOP thread 37, 16 KB at a time): faster only by running the sound
   faster. Shortening the IOP's DelayThread waits, or ending voices' release
@@ -1936,11 +1944,41 @@ the dispatch table 0x004B5C30). A run goes 0 -> 7 (the boot's load) -> 4 ->
 a race, 8 (the race taken down) -> 9 -> 4 -> 5. States 7 and 9 call
 0x001322B0 once a frame until it returns non-zero - the game's own load,
 the long one at boot: FastLoading wraps it too, and the boot's load went
-from 8.0 s to 2.1 s.
+from 8.0 s to 2.1 s (eight times the blanks); stepped within the frame, at
+the blanks' own pace, 5.9 s (350 frames) -> 2.35 s (138).
 
 The IOP's run in the EE's idle wait is a short slice (50,000 instructions):
 with the full one (20 million, so a busy IOP can't hang the EE) a module
 busy at boot kept the EE past vertical blanks - 77 lost in ten seconds.
+
+## A press to the screen: two frames the port added
+
+A player reported the controls felt late. Two frames of it were the port's,
+both found on 2026-10-19 and both gone in real time:
+
+* The pad's state went in a frame old. At each vertical blank the host
+  fills the pad block the game reads (dbc.cpp DbcFrame), then pumped the
+  window's events (SDL's controllers and keyboard) - so the block held what
+  the previous blank's pump had seen. The events are pumped first now
+  (devices.cpp FrameDone).
+* The picture went out a frame old. The game draws into 0x46, waits for
+  the blank, and only then copies the finished frame to the displayed buffer
+  (FBP 0) - inside the blanking interval, so on the console the very next
+  field shows it. The GS stream as the GS thread took it (a log of each
+  draw's target against the frames' ends, race in real time): `frame 18303
+  ends`, then the draws to 000, then 16B, 16A... (the next frame). The host
+  took the picture at the frame's end in the stream - before the copy - so
+  each one showed the frame before. In real time the copy comes well after
+  the blank's 1.43 ms (the EE first waits, in sceGsSyncPath, for VIF1's
+  worker and the GS thread to finish the frame), so no fixed time after the
+  blank works: the picture now waits, from the frame's end, for the stream
+  to move past the displayed buffer - the first draw to another target, or
+  the next frame's end (engine SetPresentAtBlankEnd; port/overrides.cpp opts
+  in). In the race: `frame 18069 ends`, draws to 000, draws to 16B, the
+  picture of 18069. Virtual time (the recorded runs) is as before.
+
+The race runs at 30 pictures a second (a picture every other blank: half
+the frames' ends have no drawing before the next), the menus at 60.
 
 ## cvt.w.s saturates
 
