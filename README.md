@@ -48,7 +48,15 @@ wrong, press **F12** at that moment and attach the folder it writes to
   pages: VIDEO (fullscreen, vertical sync, resolution, the aspect ratio,
   anti-aliasing: FXAA, SMAA or SSAA 2x), GRAPHICS (the speed blur),
   CONTROLS (the keyboard's and the controller's bindings, racing and menus;
-  button prompts; DualSense trigger effects). Saved in `pc_settings.ini`; QUIT GAME in the main menu.
+  button prompts; DualSense trigger effects), MODS (Nehalem's game patches:
+  km/h, the horn, mirror mode, no traffic, Crash Breaker in every mode,
+  headlights, heavyweights, a vertical splitscreen) and the game's hidden
+  DEVELOPER MENU. Saved in `pc_settings.ini`; QUIT GAME in the main menu.
+- **Two players on one PC**: MULTIPLAYER > SPLITSCREEN - each player presses
+  Start on the controller (or Enter on the keyboard) they play with, the
+  first player 1, the next player 2; in the race each drives their own car,
+  in the menus every device works as before. Both halves drawn at the
+  internal resolution, with the race's music.
 - **Smooth frames**: 120 Hz in fullscreen on a 144 Hz screen so that 60
   frames a second show evenly (frame pacing off by default:
   `frame_pacing=on` in `pc_settings.ini` turns it on).
@@ -169,7 +177,10 @@ microprograms compiled ahead of time").
 
 The game's code in C++ is generated on your machine from your disc image and
 never committed. Building needs Visual Studio 2022 with C++ (its MSVC, CMake
-and Ninja) and Python 3.10+ (Pillow for the art scripts). See the engine's
+and Ninja) and Python 3.10+ (Pillow for the art scripts); with
+[LLVM](https://github.com/llvm/llvm-project/releases) installed, port.py
+builds with its clang-cl - the release's compiler, its code faster
+(`PS2_COMPILER=msvc` for MSVC's own). See the engine's
 [docs/PORTING.md](https://github.com/danielgomesvieira2000/ps2-port-engine/blob/master/docs/PORTING.md)
 for every option of the port, and its skills (`engine/.claude/skills`) for the
 workflow Claude Code follows here.

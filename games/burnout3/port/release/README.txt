@@ -105,7 +105,7 @@ PC settings
 -----------
 
 In the main menu, PC SETTINGS (where ONLINE used to be - EA's servers are
-long gone) has three pages (Triangle goes back):
+long gone) has four pages and the game's hidden menu (Triangle goes back):
 
   VIDEO      fullscreen, vertical sync, the internal resolution
              (original, twice as sharp, or as sharp as your screen - up to
@@ -119,6 +119,12 @@ long gone) has three pages (Triangle goes back):
              CONTROLLER (MENUS): every key and button (see "Controls");
              BUTTON PROMPTS (auto, PlayStation or Xbox) and a DualSense's
              TRIGGER EFFECTS
+  MODS       Nehalem's patches for the game (see Credits): SPEEDOMETER in
+             km/h, a HORN, MIRROR MODE, no TRAFFIC, CRASH BREAKER in every
+             mode, HEADLIGHTS always on, the HEAVYWEIGHTS in every mode,
+             and the SPLITSCREEN one above the other or side by side
+  DEVELOPER MENU   the game's own hidden menu: unlock all, lock all, the
+             awards (what it unlocks is kept when the game saves)
 
 QUIT GAME is in the main menu too.
 
@@ -130,6 +136,17 @@ Texture packs made for PCSX2 work here too: put the pack's files in the
 "texture pack" folder beside burnout3.exe (folders inside it are fine) and
 start the game. Tab turns the pack off and on while you play. A texture is
 replaced the first time it is drawn, a moment after it appears.
+
+
+Two players on one PC
+---------------------
+
+MULTIPLAYER, then SPLITSCREEN. Each player presses Start on the controller
+they play with (Enter on the keyboard, or the key you bound): the first one
+in is player 1, the next player 2. Then CONTINUE, to the game's own
+multiplayer races. While racing, each player's device drives their own car
+only; in the menus every device - keyboard, mouse, controllers - works as
+before. Back at the main menu the seats are free again.
 
 
 LAN play
@@ -191,6 +208,8 @@ Known issues
 
 * Only the NTSC-U release (SLUS-21050) runs.
 * Online play (EA's servers) is not available; LAN play is (see LAN play).
+* SPLITSCREEN side by side (MODS: SPLITSCREEN VERTICAL): parts of the
+  race's HUD are still drawn in the wrong place.
 * A heavy moment in a race can still show a picture a frame late.
 * The World Tour map takes the mouse's wheel, right button and
   bottom-bar buttons, but not pointing yet.

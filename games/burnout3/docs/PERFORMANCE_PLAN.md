@@ -369,7 +369,9 @@ leaving them out where provably unseen is the next lever); ACC held in a
 register through MADD chains (no change: the code is bound by its
 instructions, not their latency); blocks grouped into one function per 6 or
 24 blocks, switching inside it (slower - 4.02 / 3.92 ns - and 24 a group took
-MSVC nine minutes a file); clang-cl is not installed.
+MSVC nine minutes a file). clang-cl (2026-10-18, now port.py's compiler
+when LLVM is installed): the same VU code 3.33 / 3.02 ns (garage / race,
+against MSVC's 4.0 / 3.7), the same hashes.
 
 What is left for the garage at a steady 60: ~7% more of VU1. The larger
 levers, each a project: stalls proven invisible per block (Q/P and CLIP
