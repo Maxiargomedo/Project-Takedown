@@ -519,3 +519,12 @@ its time); the glow's E0/D2/D3 drawing has FBMSK FF000000 - it never touches
 the alpha the 8H reads use - yet still makes the 1024-wide view stale (a
 per-channel staleness would drop those reloads altogether); ~810 layout
 transitions a frame, which on Intel may each resolve compression.
+
+Later (2026-10-19, the user's playtest): splitscreen played slower than the
+console with nothing dropped. The presents are 60 a second whatever is new;
+the VIF1 transfers a second in --frame-times count the pictures drawn - 41-48
+in splitscreen. The race went one tick a picture where the console's
+splitscreen goes two (FINDINGS "Splitscreen's 30 pictures a second"); now two
+ticks follow a picture of two blanks: the Intel UHD's splitscreen 45 pictures
+and 58 ticks a second (it was 45 and 45: 75% speed). Benchmarks of a game
+running below 60 should read the VIF1 transfers, not the dropped pictures.
