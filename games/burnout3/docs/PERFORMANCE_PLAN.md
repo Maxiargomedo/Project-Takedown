@@ -467,3 +467,55 @@ feedback copies, ~1,000 transitions and ~400 dispatches a splitscreen frame:
 fewer passes (the blur's strips, the feedback copies) is the GS thread's next
 lever; the open engine pull request's renderer thread (#1) takes the
 recording off it altogether.
+
+## Loading, a press to the screen, splitscreen on an integrated GPU (2026-10-19, night)
+
+Engine branch `latency` (1d8d428, 6763888) and game 94d7df3. Every Burnout 3
+GPU run as recorded after each change (virtual time is unchanged by all of
+them). Benchmarks: the scripted race (and the splitscreen race with both
+players accelerating: `--press cross@9300-12900` added), real time, windowed,
+frame pacing on so late frames are counted; the night's start (engine
+b9373ef) and its end alternated, builds side by side.
+
+**Loading.** FastLoading fast-forwarded the vertical blanks eight times
+while the game loaded - the loading screen's spinner ran eight times as fast.
+The loading step is now taken again within the frame (RunIopBetweenSteps:
+the IOP's slice between steps, up to half a frame), the blanks at their own
+pace: the race's load 6.34 s -> 2.61 s, the boot's 5.9 s -> 2.35 s (FINDINGS
+"Loading a race"). What is left is mostly the race's sound streams filling
+as the sound plays (1.37 s).
+
+**A press to the screen: two frames less** (FINDINGS "A press to the
+screen"). The pad block was filled before the window's events were pumped
+(a frame old), and the picture was taken before the game copied its
+finished frame to the displayed buffer (a frame old). Both fixed: about 33 ms
+less at 60 pictures a second. The picture now waits for the copy: the
+blank-to-picture delay of the one-player race on the RTX went 0.1 -> 1.1 ms
+(median), the price of showing the newest frame instead of the one before.
+
+**Splitscreen on the Intel UHD.** The integrated GPU bounds it even at 1x:
+the GS thread waited 41% of its time on the GPU (PresentImageAt's fence).
+Its busy figure stays ~88% at any resolution (it clocks down when there is
+slack) - dropped frames, not busy %, tell its capacity. Tried and dropped:
+barriers without waits (GPU time within noise), doubled 3D/compute switches
+(no change), two present slots, no spinning (no power to spare). Found: the
+glow's 1024x256 view (read as PSMT8H) reloaded from memory 18 times a
+frame at the internal resolution. Views 1024 wide and over are now kept at
+1x (closer to the software GS, too):
+
+| run (real time, 3,000 blanks) | start of night | end of night |
+| --- | --- | --- |
+| splitscreen, iGPU, 2x, both racing | 1 / 21 dropped, 5 / 71 late, GS 100% | 0 / 0 dropped, 3 / 3 late, GS 95% |
+| splitscreen, iGPU, 3x, both racing | 138 dropped, 90 blanks lost | 76 dropped, 8 lost |
+| one player, iGPU, 2x | 2 late, GS 78%, delay 33.9 ms | 1 late, GS 51%, delay 1.3 ms |
+| splitscreen, RTX 4070, 2x | 0 dropped, 0 late | 0 dropped, 1 late |
+| one player, RTX 4070, 3x | 0 late, 1.44 cores | 0 late, 1.45 cores |
+
+(delay: the median from a frame's blank to its picture being handed to the
+display, the frame pacing's own measure.)
+
+Next levers: splitscreen at 3x on the iGPU is still GPU-bound (draws 73% of
+its time); the glow's E0/D2/D3 drawing has FBMSK FF000000 - it never touches
+the alpha the 8H reads use - yet still makes the 1024-wide view stale (a
+per-channel staleness would drop those reloads altogether); ~810 layout
+transitions a frame, which on Intel may each resolve compression.
