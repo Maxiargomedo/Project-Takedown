@@ -9,8 +9,18 @@
  * by the main loop as a crash's slow motion starts and ends (0x00132090).
  * The patches make both always choose 1; a movie, timed by the picture,
  * then advances half as far each one (0x00130D50).
+ *
+ * At half rate the race also goes on two ticks a picture, not one (the main
+ * loop, 0x00132F48: the flag +0x2DA66). Splitscreen asks for half rate for
+ * the whole race, a crash for its slow motion. At every blank and one tick
+ * a picture, a PC that makes fewer than 60 pictures a second ran the race
+ * slower than the console (splitscreen at ~48: at 80% of its speed). So
+ * where the game asks for half rate, a picture that took two blanks is
+ * followed by two ticks: 60 pictures a second where the PC keeps up, the
+ * console's time where it does not - never slower than its own 30.
  */
 
+#include <algorithm>
 #include <cstring>
 
 #include "ps2host/host.h"
@@ -20,6 +30,8 @@
 // slows; a movie screen as its movie starts (see each below).
 void F_00132090(lifted::Context& c);
 void F_00130D50(lifted::Context& c);
+// The vertical blank's handler (see BlankHandler).
+void F_001F1CE8(lifted::Context& c);
 
 namespace {
 
@@ -46,18 +58,41 @@ void MenuRate(lifted::Context& c) {
     c.r[31] = entry_ra;
 }
 
-/* 0x00132090(game): while racing (0x004EB1E0), a crash's slow motion asked
-   for (+0x2DA65) is followed (+0x2DA66, a picture every second blank while
-   it is set). Here never followed: every blank, each frame. The patch at
-   0x001320D8 (the change seen, a branch to the every-blank call). */
+/* 0x001F1CE8 (the vertical blank's handler, a0 the cause): with its own
+   data pointer (*(gp-0x5E24)), a picture ready to show (-0x5EA1) flipped at
+   the start of a blank (cause 2) once the interval's blanks have gone by
+   (its count, -0x5E2F, stops at the interval: at 1 it cannot tell). Here,
+   as each flips, the blanks it took since the one before - counted here. */
+u32 g_picture_blanks = 1;
+
+void BlankHandler(lifted::Context& c) {
+    static u32 blanks = 0;
+    const u32 data = u32(generated::ReadS32(u32(c.r[28]) - 0x5E24u));
+    const bool start = u32(c.r[4]) == 2;
+    const bool ready = generated::ReadU8(data - 0x5EA1u) != 0;
+    if (start) ++blanks;
+    F_001F1CE8(c);
+    if (start && ready && generated::ReadU8(data - 0x5EA1u) == 0) {
+        g_picture_blanks = std::max(1u, blanks);
+        blanks = 0;
+    }
+}
+
+/* 0x00132090(game): while racing (0x004EB1E0), the half rate asked for
+   (+0x2DA65: a crash's slow motion, splitscreen's whole race) is followed
+   (+0x2DA66: a picture every second blank, two ticks each). Here a picture
+   every blank, each frame - the patch at 0x001320D8 (the change seen, a
+   branch to the every-blank call) - and followed only as ticks: two after a
+   picture that took two blanks (see above), one otherwise. */
 void CrashRate(lifted::Context& c) {
     const u32 entry_ra = u32(c.r[31]);
     const u32 asked = u32(c.r[4]) + 0x30000u - 0x259Bu, followed = asked + 1;
-    const u8 was = generated::ReadU8(followed);
     generated::Write8(followed, generated::ReadU8(asked));   // no change seen
     F_00132090(c);
-    generated::Write8(followed, was);
-    if (generated::ReadU8(0x004EB1E0u) != 0) {
+    const bool racing = generated::ReadU8(0x004EB1E0u) != 0;
+    const bool behind = racing && generated::ReadU8(asked) != 0 && g_picture_blanks >= 2;
+    generated::Write8(followed, behind ? 1u : 0u);
+    if (racing) {
         u64 saved[6];
         std::memcpy(saved, &c.r[2], sizeof saved);           // v0..a1 as it left them
         c.r[4] = 1;
@@ -94,6 +129,7 @@ void SixtyFpsMovieRate(lifted::Context& c) { MovieRate(c); }
 
 void RegisterSixtyFps() {
     ps2host::Override(0x001D3EE0u, MenuRate, "a frontend screen's frame rate: 60 FPS menus");
-    ps2host::Override(0x00132090u, CrashRate, "a crash's slow motion: at 60 FPS");
+    ps2host::Override(0x00132090u, CrashRate, "a crash's slow motion, splitscreen: at 60 FPS");
+    ps2host::Override(0x001F1CE8u, BlankHandler, "the vertical blank's handler: the blanks a picture took");
     ps2host::Override(0x00130D50u, MovieRate, "a movie screen's start: its movie at 60 FPS");
 }

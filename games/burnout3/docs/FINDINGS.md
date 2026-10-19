@@ -1980,6 +1980,26 @@ both found on 2026-10-19 and both gone in real time:
 The race runs at 30 pictures a second (a picture every other blank: half
 the frames' ends have no drawing before the next), the menus at 60.
 
+## Splitscreen's 30 pictures a second, and the race's ticks
+
+Splitscreen played slower than the console with no picture dropped (the
+user's playtest, 2026-10-19). On the console it is a 30-pictures-a-second
+mode: with port/sixty_fps.cpp's overrides off (logged), the main loop asks
+for a picture every second blank at the race's start (0x001F4290(2) from
+0x00132200) - through the flag a crash's slow motion uses (+0x2DA65 asked,
++0x2DA66 followed), held for the whole race. Followed, it also makes the
+race go on two ticks a picture (0x00132F48: 0x00376570(.., 2, 8), not
+(.., 1, 4)). The "60 FPS Crashes" override never followed it, so the race
+went one tick a picture at every blank: right at 60 pictures a second, slow
+where the PC makes fewer - splitscreen's race made ~48 on the RTX at 2x, 40
+to 45 on the Intel UHD (the VIF1 transfers a second in --frame-times show
+it; the presents are 60 a second whatever is new). Now, where the game asks
+for half rate, a picture that took two blanks (counted in the vertical
+blank's handler, 0x001F1CE8, as it flips: its own count stops at the
+interval) is followed by two ticks: the Intel UHD's splitscreen 45 pictures
+and 58 ticks a second (45 and 45 before), the RTX 60 and 60. A picture of
+three blanks still gives two ticks, the most the game has.
+
 ## cvt.w.s saturates
 
 The EE's float-to-word conversion truncates toward zero below 2^31 in
