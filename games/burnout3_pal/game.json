@@ -1,0 +1,15 @@
+{
+  "name": "Burnout 3: Takedown (PAL) (SLES-52584)",
+  "title": "Burnout 3: Takedown (PAL)",
+  "version": "0.0.1-dev",
+  "iso": "../../../Burnout 3 Takedown [PAL-NTSC] [Es,En,Nl,Sv]/Burnout 3 Takedown.iso",
+  "executable": "SLES_525.84",
+  "database": "build/sles_525_84.json",
+  "layout": {
+    "image_end": "0x02000000",
+    "scratch": "0x01800000",
+    "scratch_size": "0x20000",
+    "stack_top": "0x01F00000",
+    "stack_size": "0x10000"
+  }
+}
