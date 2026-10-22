@@ -1,24 +1,23 @@
-# Project Takedown: Burnout 3 Takedown (PAL) - Native PC Port
+# Project Takedown: Burnout 3 Takedown (PAL) - Native PC Port (v1.0)
 
 [![Burnout 3 PC Port](https://img.shields.io/badge/Burnout%203-PAL%20PC%20Port-red.svg)](https://github.com/Maxiargomedo/Project-Takedown)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x64%20(Vulkan)-blue.svg)](https://github.com/Maxiargomedo/Project-Takedown)
-[![Release](https://img.shields.io/badge/Release-v1.0.0-orange.svg)](https://github.com/Maxiargomedo/Project-Takedown/releases)
+[![Version](https://img.shields.io/badge/Versi%C3%B3n-1.0-orange.svg)](https://github.com/Maxiargomedo/Project-Takedown/releases)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Burnout 3: Takedown (PAL - SLES-52584) ejecutándose de forma nativa en PC con Windows.**  
+**Burnout 3: Takedown (PAL - SLES-52584) Versión 1.0 ejecutándose de forma nativa en PC con Windows.**  
 No es emulación: el código del juego de PS2 fue traducido a C++ nativo y compilado para x64, alcanzando 60 FPS estables, soporte para pantallas panorámicas (16:9), escalado hasta 4K, menú de ajustes de PC integrado, soporte completo para teclado, ratón y mandos modernos (Xbox, PlayStation DualShock/DualSense), y un instalador autónomo listo para usar.
 
 ---
 
-## 💾 Descarga del Instalador / Quick Download
+## 💾 Descarga del Instalador (Versión 1.0)
 
-Para descargar el instalador directo sin compilar nada:
+Para descargar el instalador directo sin necesidad de compilar nada:
 
-* 🚀 **[Descarga Directa del Instalador (Instalador_Burnout3_PC.exe)](https://raw.githubusercontent.com/Maxiargomedo/Project-Takedown/main/releases/Instalador_Burnout3_PC.exe)**  
-* 📂 **[Ver archivo en el Repositorio con botón Download](https://github.com/Maxiargomedo/Project-Takedown/blob/main/releases/Instalador_Burnout3_PC.exe)**  
-* 🏷️ **[Página de Releases / Versiones](https://github.com/Maxiargomedo/Project-Takedown/releases)**
+👉 **[DESCARGAR INSTALADOR DIRECTO (Instalador_Burnout3_PC.exe)](https://raw.githubusercontent.com/Maxiargomedo/Project-Takedown/main/releases/Instalador_Burnout3_PC.exe)**  
+*(Haz clic en el enlace de arriba y la descarga comenzará inmediatamente).*
 
-### Pasos rápidos:
+### Pasos de instalación:
 1. Descarga y ejecuta `Instalador_Burnout3_PC.exe`.
 2. Elige la carpeta de instalación (por defecto: `C:\Juegos\Burnout 3 Takedown PC`).
 3. El instalador configurará los accesos directos y los archivos necesarios.
@@ -34,7 +33,7 @@ Para descargar el instalador directo sin compilar nada:
 
 ---
 
-## ✨ Características de esta versión (Project Takedown PAL)
+## ✨ Características de la Versión 1.0 (Project Takedown PAL)
 
 - **Edición PAL Europea completa**: Soporte para idiomas Español, Inglés, Francés, Alemán e Italiano.
 - **Instalador Nativo Win32 integrado**: Con detección inteligente de instalaciones previas, reparación automática y desinstalación limpia.
