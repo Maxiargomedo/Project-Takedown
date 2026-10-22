@@ -16,20 +16,18 @@
 
 <div align="center">
 
-### 🏎️ 60 FPS Native Racing & Widescreen (16:9)
-![Burnout 3 60 FPS Native Race](docs/images/gameplay_race.png)
+### 🏎️ Gameplay en Carrera: 60 FPS Nativos y Pantalla Panorámica 16:9 / 60 FPS Widescreen Race
+![Burnout 3 60 FPS Widescreen In-Game Race](docs/images/gameplay_race.png)
 
-### 💥 Authentic Crash Mode & Enhanced Visuals
-![Burnout 3 Crash Gameplay](docs/images/gameplay_action.png)
-
-### ⚙️ Integrated PC Settings & Custom Installer
-| 🛠️ PC Settings Menu | 🖥️ Advanced Video Settings |
+### ⚙️ Menú de Ajustes de PC Integrado / In-Game PC Settings
+| 🛠️ Menú Principal de Ajustes PC | 🎮 Configuración de Controles y Mapeo |
 |:---:|:---:|
-| ![PC Settings](docs/images/pc_settings_menu.png) | ![Video Options](docs/images/video_settings.png) |
+| ![Menú Ajustes PC](docs/images/pc_settings_menu.png) | ![Ajustes de Controles](docs/images/controls_menu.png) |
 
-| 🎮 Keyboard & Controller Mapping | 📦 Win32 Standalone Installer |
+### 📦 Lanzador e Instalador para PC / PC Launcher & Installer
+| 🚀 Lanzador de PC (Gráficos, ISO y Partidas) | 💿 Instalador Autónomo Win32 con Mantenimiento |
 |:---:|:---:|
-| ![Controls Mapping](docs/images/key_mapping.png) | ![Installer](docs/images/installer.png) |
+| ![Lanzador de PC](docs/images/pc_launcher.png) | ![Instalador Autónomo](docs/images/installer.png) |
 
 </div>
 
@@ -38,7 +36,7 @@
 # 🇬🇧 English Version
 
 **Burnout 3: Takedown (PAL - SLES-52584) Version 1.0 running natively on Windows PC.**  
-This is not emulation: the PS2 game code was translated into native C++ and compiled for x64, delivering a locked 60 FPS, true 16:9 widescreen presentation, up to 4K internal resolution scaling, integrated in-game PC settings, modern gamepad layouts (Xbox & PlayStation triggers), keyboard remapping, mouse navigation, and an all-in-one standalone installer.
+This is not emulation: the PS2 game code was translated into native C++ and compiled for x64, delivering locked 60 FPS, true 16:9 widescreen presentation, up to 4K internal resolution scaling, integrated in-game PC settings, modern gamepad layouts (Xbox & PlayStation triggers), keyboard remapping, mouse navigation, and an all-in-one standalone installer.
 
 ### 💾 Download Installer (v1.0)
 👉 **[CLICK HERE TO DOWNLOAD (Instalador_Burnout3_PC.exe)](https://raw.githubusercontent.com/Maxiargomedo/Project-Takedown/main/releases/Instalador_Burnout3_PC.exe)**  
