@@ -1,0 +1,5 @@
+#include "resource.h"
+
+IDI_MAIN_ICON   ICON    "burnout3.ico"
+IDB_BANNER      BITMAP  "launcher_banner.bmp"
+IDR_PAYLOAD_ZIP RCDATA  "payload.zip"
