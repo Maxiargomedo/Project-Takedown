@@ -184,6 +184,11 @@ int main(int argc, char** argv) {
     }
     if (!HasAvx2()) {
         std::fprintf(stderr, "This build needs a processor with AVX2 (Intel Haswell, AMD Excavator or later).\n");
+        MessageBoxW(nullptr,
+            L"Este port nativo de Burnout 3 requiere un procesador compatible con instrucciones AVX2 "
+            L"(Intel Core de 4ta generaci F3n / Haswell o superior, AMD Excavator / Ryzen o superior).\n\n"
+            L"Tu procesador no soporta AVX2.",
+            L"Procesador no compatible", MB_OK | MB_ICONERROR);
         return 70;
     }
 #ifdef PS2HOST_GAME_TITLE

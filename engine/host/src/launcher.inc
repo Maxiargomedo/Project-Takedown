@@ -463,6 +463,31 @@ LRESULT CALLBACK LauncherWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
                 ps2host::SetSettingOn("ask_disc", true);
 
+                if (state->disc.empty() || !IsGameDisc(state->disc)) {
+                    int resp = MessageBoxW(hwnd,
+                        L"Para iniciar el juego necesitas seleccionar tu copia de la imagen ISO de Burnout 3: Takedown (PAL / SLES-52584).\n\n\x00BFDeseas buscar y seleccionar tu archivo ISO ahora?",
+                        L"Seleccionar ISO del Juego",
+                        MB_YESNO | MB_ICONINFORMATION);
+                    if (resp == IDYES) {
+                        std::string chosen = PickDisc(state->disc);
+                        if (!chosen.empty() && IsGameDisc(chosen)) {
+                            state->disc = chosen;
+                            std::wstring wide = Utf8ToWide(state->disc);
+                            SetWindowTextW(state->hIsoEdit, wide.c_str());
+                            ps2host::SetSetting("disc", state->disc);
+                        } else if (!chosen.empty()) {
+                            MessageBoxW(hwnd,
+                                L"El archivo seleccionado no corresponde a la imagen de disco oficial de Burnout 3: Takedown (PAL / SLES-52584).\n\nPor favor selecciona una ISO v\x00E1lida de la versi\x00F3n europea de PS2.",
+                                L"ISO no reconocida", MB_OK | MB_ICONWARNING);
+                            return 0;
+                        } else {
+                            return 0;
+                        }
+                    } else {
+                        return 0;
+                    }
+                }
+
                 if (!state->disc.empty() && IsGameDisc(state->disc)) {
                     ps2host::SetSetting("disc", state->disc);
                 }
