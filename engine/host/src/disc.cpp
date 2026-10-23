@@ -1,5 +1,11 @@
 #include "ps2host/disc.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 #include <cctype>
 #include <cstring>
 #include <string>
@@ -7,6 +13,28 @@
 namespace ps2host {
 
 namespace {
+
+#ifdef _WIN32
+std::FILE* OpenDiscFile(const std::string& path, const wchar_t* wmode) {
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, nullptr, 0);
+    if (wlen > 0) {
+        std::wstring wpath(wlen, 0);
+        MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, &wpath[0], wlen);
+        if (std::FILE* f = _wfopen(wpath.c_str(), wmode)) return f;
+    }
+    int alen = MultiByteToWideChar(CP_ACP, 0, path.c_str(), -1, nullptr, 0);
+    if (alen > 0) {
+        std::wstring apath(alen, 0);
+        MultiByteToWideChar(CP_ACP, 0, path.c_str(), -1, &apath[0], alen);
+        if (std::FILE* f = _wfopen(apath.c_str(), wmode)) return f;
+    }
+    return std::fopen(path.c_str(), "rb");
+}
+#define OPEN_DISC_FILE(p) OpenDiscFile(p, L"rb")
+#else
+#define OPEN_DISC_FILE(p) std::fopen((p).c_str(), "rb")
+#endif
+
 
 u32 Le32(const u8* p) { return u32(p[0]) | u32(p[1]) << 8 | u32(p[2]) << 16 | u32(p[3]) << 24; }
 
@@ -33,7 +61,7 @@ namespace {
 
 // The image a .cue sheet names in its first FILE line, beside the sheet.
 std::string CueImage(const std::string& cue_path) {
-    std::FILE* cue = std::fopen(cue_path.c_str(), "rb");
+    std::FILE* cue = OPEN_DISC_FILE(cue_path);
     if (!cue) return "";
     std::string text;
     char chunk[4096];
@@ -75,7 +103,7 @@ bool Disc::Open(const std::string& path) {
         image = CueImage(path);
         if (image.empty()) return false;
     }
-    file_ = std::fopen(image.c_str(), "rb");
+    file_ = OPEN_DISC_FILE(image);
     if (!file_) return false;
     _fseeki64(file_, 0, SEEK_END);
     size_ = u64(_ftelli64(file_));

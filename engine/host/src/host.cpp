@@ -510,8 +510,12 @@ u32 LoadElf(const std::string& path) {
 u32 LoadBootElf() {
     const std::string boot = GuestDisc().BootPath();
     std::vector<u8> data;
-    if (boot.empty() || !GuestDisc().ReadFile(boot, &data))
+    if (boot.empty() || !GuestDisc().ReadFile(boot, &data)) {
+        std::string err = "La imagen ISO seleccionada no contiene un ejecutable de arranque valido (SYSTEM.CNF / SLES_525.84).\n\n"
+                          "Asegurate de que tu archivo ISO corresponda a Burnout 3: Takedown (PAL / Europa) y que no este corrupto o comprimido (.zip, .rar, .7z).";
+        MessageBoxA(nullptr, err.c_str(), "Project Takedown - ISO no valida", MB_OK | MB_ICONERROR);
         throw Unimplemented{"the disc image has no executable to boot (SYSTEM.CNF)"};
+    }
     return LoadElf(boot, std::move(data));
 }
 
@@ -721,8 +725,16 @@ int Run(const Options& options) {
     if (options.gpu || options.gpu_shadow) {
         std::string error;
         const GpuMode mode = options.gpu ? GpuMode::Primary : options.gpu_shadow_rtt ? GpuMode::ShadowRtt : GpuMode::Shadow;
-        if (!StartGpuRenderer(&error, mode, options.gpu_show))
+        if (!StartGpuRenderer(&error, mode, options.gpu_show)) {
             std::fprintf(stderr, "%s: %s\n", options.gpu ? "--gpu" : "--gpu-shadow", error.c_str());
+            std::string msg = "No se pudo iniciar el motor grafico Vulkan 1.3:\n\n" + error +
+                "\n\nEste port nativo de Burnout 3 requiere una tarjeta grafica compatible con Vulkan 1.3 (NVIDIA, AMD o Intel con drivers actualizados).\n\n"
+                "Soluciones recomendadas:\n"
+                "1. Actualiza los drivers de tu tarjeta grafica desde la pagina oficial del fabricante (NVIDIA, AMD o Intel).\n"
+                "2. Si juegas en laptop con graficos hibridos (Intel + NVIDIA/AMD), configura Windows para ejecutar el juego con los graficos dedicados.";
+            MessageBoxA(nullptr, msg.c_str(), "Project Takedown - Requisito Grafico", MB_OK | MB_ICONERROR);
+            return 65;
+        }
     }
     bool sound = false;
     if (options.audio) {
@@ -754,8 +766,12 @@ int Run(const Options& options) {
     std::string outcome;
     int code = 2;
     try {
-        if (!options.disc_path.empty() && !GuestDisc().Open(options.disc_path))
+        if (!options.disc_path.empty() && !GuestDisc().Open(options.disc_path)) {
+            std::string err = "No se pudo abrir el archivo de imagen ISO:\n\n" + options.disc_path +
+                              "\n\nVerifica que la ruta sea correcta, que el archivo exista y no este bloqueado por otro programa.";
+            MessageBoxA(nullptr, err.c_str(), "Project Takedown - Error al abrir ISO", MB_OK | MB_ICONERROR);
             throw Unimplemented{"cannot open the disc image " + options.disc_path};
+        }
         const u32 entry = options.elf_path.empty() ? LoadBootElf() : LoadElf(options.elf_path);
         // The kernel enters a program with a stack at the top of RAM; the program's
         // own start-up code then asks for its real one (SetupThread).

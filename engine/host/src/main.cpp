@@ -22,6 +22,8 @@
 #include <commdlg.h>
 #include <commctrl.h>
 #include <shellapi.h>
+#include <objbase.h>
+#undef small
 
 #include "ps2host/disc.h"
 #include "ps2host/host.h"
@@ -62,6 +64,20 @@ bool HasAvx2() {
 }
 
 std::string g_log;     // the log a run started without arguments writes
+static LONG WINAPI CrashFilter(EXCEPTION_POINTERS* ep) {
+    DWORD code = ep ? ep->ExceptionRecord->ExceptionCode : 0;
+    void* addr = ep ? ep->ExceptionRecord->ExceptionAddress : nullptr;
+    std::fprintf(stderr, "\n[CRITICAL ERROR] Crash exception 0x%08X at address %p\n", code, addr);
+    std::fflush(stderr);
+    wchar_t buf[512];
+    swprintf_s(buf, 512,
+        L"Project Takedown ha detectado un error critico inesperado (Excepcion 0x%08X en %p).\n\n"
+        L"Por favor revisa el archivo de registro en la carpeta del juego para mas detalles.",
+        code, addr);
+    MessageBoxW(nullptr, buf, L"Project Takedown - Error Critico", MB_OK | MB_ICONERROR);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 
 #ifdef PS2HOST_GAME_EXECUTABLE
 /* Whether `path` is an image of the game's disc: the executable it boots is
@@ -170,7 +186,17 @@ void AttachTerminal() {
 }
 
 int main(int argc, char** argv) {
+    SetUnhandledExceptionFilter(CrashFilter);
     AttachTerminal();
+    if (!HasAvx2()) {
+        std::fprintf(stderr, "This build needs a processor with AVX2 (Intel Haswell, AMD Excavator or later).\n");
+        MessageBoxW(nullptr,
+            L"Este port nativo de Burnout 3 requiere un procesador compatible con instrucciones AVX2\n"
+            L"(Intel Core de 4ta generacion / Haswell o superior, AMD Ryzen / Excavator o superior).\n\n"
+            L"Tu procesador no es compatible con AVX2.",
+            L"Procesador no compatible", MB_OK | MB_ICONERROR);
+        return 70;
+    }
     std::vector<std::string> play;
     std::vector<char*> play_argv;
     const bool choose_disc_arg = (argc == 2 && std::string(argv[1]) == "--choose-disc");
@@ -182,15 +208,6 @@ int main(int argc, char** argv) {
         argc = int(play.size());
         argv = play_argv.data();
     }
-    if (!HasAvx2()) {
-        std::fprintf(stderr, "This build needs a processor with AVX2 (Intel Haswell, AMD Excavator or later).\n");
-        MessageBoxW(nullptr,
-            L"Este port nativo de Burnout 3 requiere un procesador compatible con instrucciones AVX2 "
-            L"(Intel Core de 4ta generaci F3n / Haswell o superior, AMD Excavator / Ryzen o superior).\n\n"
-            L"Tu procesador no soporta AVX2.",
-            L"Procesador no compatible", MB_OK | MB_ICONERROR);
-        return 70;
-    }
 #ifdef PS2HOST_GAME_TITLE
     ps2host::SetGameTitle(PS2HOST_GAME_TITLE);      // the window's (game.json's "title")
 #endif
@@ -200,13 +217,37 @@ int main(int argc, char** argv) {
     ps2host::RegisterFunctions(kGuestFunctions, kGuestFunctionCount);
     ps2host::RegisterOverlays(kGuestOverlays, kGuestOverlayCount);
     RegisterGameOverrides();
-    const int code = ps2host::Main(argc, argv);
-    if (!play.empty() && code != 0) {         // closing the window ends a run with 0
-        std::fflush(nullptr);
-        const std::string text = "The game stopped because of an error. What happened is in " +
-                                 g_log + ", beside the game.";
-        MessageBoxA(nullptr, text.c_str(), ps2host::GameTitle().empty() ? "PS2 port" : ps2host::GameTitle().c_str(),
-                    MB_OK | MB_ICONERROR);
+
+    int code = -1;
+    try {
+        code = ps2host::Main(argc, argv);
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "[FATAL EXCEPTION] %s\n", e.what());
+        std::fflush(stderr);
+        MessageBoxA(nullptr, ("Error fatal durante la ejecucion:\n\n" + std::string(e.what()) + "\n\nConsulta el archivo " + g_log).c_str(), "Project Takedown - Error", MB_OK | MB_ICONERROR);
+        return 1;
+    } catch (...) {
+        std::fprintf(stderr, "[FATAL EXCEPTION] Unknown exception\n");
+        std::fflush(stderr);
+        MessageBoxA(nullptr, ("Error critico inesperado en el motor.\n\nConsulta el archivo " + g_log).c_str(), "Project Takedown - Error", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+
+    if (!play.empty()) {
+        if (code != 0 && code != 65 && code != 70) {
+            std::fflush(nullptr);
+            const std::string text = "El juego se ha detenido debido a un problema durante la ejecucion.\n\n"
+                                     "Los detalles de lo ocurrido quedaron guardados en el archivo:\n" +
+                                     g_log + "\n(en la misma carpeta del juego).";
+            MessageBoxA(nullptr, text.c_str(), ps2host::GameTitle().empty() ? "Project Takedown" : ps2host::GameTitle().c_str(),
+                        MB_OK | MB_ICONERROR);
+        } else if (code == 0 && !ps2host::WindowError().empty()) {
+            std::fflush(nullptr);
+            const std::string text = "El juego se cerro inesperadamente:\n\n" + ps2host::WindowError() +
+                                     "\n\nRevisa el archivo de registro " + g_log;
+            MessageBoxA(nullptr, text.c_str(), ps2host::GameTitle().empty() ? "Project Takedown" : ps2host::GameTitle().c_str(),
+                        MB_OK | MB_ICONERROR);
+        }
     }
     // What must be finished is (the report written, the settings and the
     // memory card saved as they changed, the WAV's header here); the rest -

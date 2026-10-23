@@ -319,6 +319,7 @@ void SetGameTitle(const std::string& title);
 const std::string& GameTitle();
 bool WindowOpen();
 bool WindowClosed();
+std::string WindowError();
 void PresentFrame();
 /* The window's events alone (PresentFrame without the picture, which the GS
    thread presents): false once it has been closed. */

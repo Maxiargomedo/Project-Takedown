@@ -2,6 +2,7 @@
 #define PS2HOST_LAUNCHER_INC
 
 #pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "comctl32.lib")
 
 // Forward declaration
 std::string PickDisc(const std::string& initial_path);
@@ -516,6 +517,10 @@ LRESULT CALLBACK LauncherWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 }
 
 bool ShowLauncher(const std::filesystem::path& here, std::string& disc) {
+    INITCOMMONCONTROLSEX icex = { sizeof(INITCOMMONCONTROLSEX), ICC_WIN95_CLASSES | ICC_STANDARD_CLASSES };
+    InitCommonControlsEx(&icex);
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
     LauncherState state;
     state.here = here;
     state.disc = disc;
@@ -540,7 +545,10 @@ bool ShowLauncher(const std::filesystem::path& here, std::string& disc) {
         x, y, w, h,
         nullptr, nullptr, GetModuleHandleW(nullptr), &state);
 
-    if (!hwnd) return false;
+    if (!hwnd) {
+        MessageBoxW(nullptr, L"No se pudo crear la ventana del lanzador de Burnout 3.", L"Error de Inicializacion", MB_OK | MB_ICONERROR);
+        return false;
+    }
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);

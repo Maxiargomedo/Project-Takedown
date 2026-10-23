@@ -37,6 +37,13 @@ namespace {
 
 HWND g_window = nullptr;
 bool g_closed = false;
+std::string g_window_error;
+
+}  // namespace
+
+std::string WindowError() { return g_window_error; }
+
+namespace {
 
 #ifdef PS2HOST_VULKAN
 std::unique_ptr<ps2gpu::Display> g_display;
@@ -645,7 +652,11 @@ void PresentFrame() {
         std::vector<u32> pixels;
         u32 w = 0, h = 0;
         const bool got = (g_picture_source && g_picture_source(&pixels, &w, &h)) || gs::TheGs().Picture(&pixels, &w, &h);
-        if (got && !g_display->Present(pixels.data(), w, h)) g_closed = true;
+        if (got && !g_display->Present(pixels.data(), w, h)) {
+            g_window_error = "Error al presentar el fotograma en pantalla con Vulkan (posible desconexión del controlador o swapchain agotado).";
+            std::fprintf(stderr, "[window] Present failed!\n");
+            g_closed = true;
+        }
         return;
     }
 #endif
